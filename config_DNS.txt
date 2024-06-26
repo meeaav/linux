@@ -1,0 +1,146 @@
+================= MASTER =================
+
+
+sudo apt install bind9
+sudo nano /etc/network/interfaces :
+
+ajouter : 
+allow-hotplug ens33
+iface ens33 inet static
+    address 192.168.X.11
+    netmask 255.255.255.0
+    gateway 192.168.X.2
+
+sudo nano /etc/bind/named.conf.local
+ajouter : 
+
+zone "sak.esgi" IN {
+    type master;
+    file "/etc/bind/db.sak.esgi";
+    notify yes;
+    allow-transfer { 192.168.X.12; };
+};
+
+zone "X.168.192.in-addr.arpa" {
+    type master;
+    file "/etc/bind/db.192";
+    allow-transfer { 192.168.X.12; };
+};
+
+
+sudo nano /etc/bind/named.conf.options
+rajouter : 
+
+forwarders{
+    8.8.8.8;
+    8.8.4.4;
+};
+allow-recursion { any; };
+auth-nxdomain no;
+
+
+sudo nano /etc/resolv.conf
+changer 
+
+domain sak.esgi
+search sak.esgi
+nameserver 192.168.X.11
+
+sudo cp /etc/bind/db.local /etc/bind/db.sak.esgi
+sudo nano /etc/bind/db.sak.esgi
+ajouter/modifier 
+
+$TTL    604800
+@    IN    SOA    ns1.sak.esgi. admin.sak.esgi. (
+            1    ; Serial
+            604800    ; Refresh
+            86400    ; Retry
+            2419200    ; Expire
+            604800 )    ; Negative Cache TTL
+;
+
+@    IN    NS    ns1.sak.esgi.
+@    IN    NS    ns2.sak.esgi.
+
+ns1    IN    A    192.168.X.11
+ns2    IN    A    192.168.X.12
+
+ksa    IN    CNAME    ns1.sak.esgi.
+ska    IN    CNAME    ns2.sak.esgi.
+
+sudo cp /etc/bind/db.0 /etc/bind/db.192
+sudo nano /etc/bind/db.sak.esgi
+ajouter/modifier
+
+$TTL    604800
+@    IN    SOA    ns1.sak.esgi. admin.sak.esgi. (
+            1    ; Serial
+            604800    ; Refresh
+            86400    ; Retry
+            2419200    ; Expire
+            604800 )    ; Negative Cache TTL
+;
+@    IN    NS    ns1.sak.esgi.
+@    IN    NS    ns2.sak.esgi.
+11    IN    PTR    ns1.sak.esgi.
+12    IN    PTR    ns2.sak.esgi.
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!! TEST !!!!!!!!!!!!!!!!!!!!!!!!!!!
+nslookup 192.168.X.11 (reverse DNS)
+nslookup ns1.sak.esgi
+ping google.fr
+nameded-checkzone sak.esgi
+
+
+================= SLAVE =================
+ajouter : 
+allow-hotplug ens33
+iface ens33 inet static
+    address 192.168.X.12
+    netmask 255.255.255.0
+    gateway 192.168.X.2
+
+
+sudo nano /etc/bind/named.conf.local
+ajouter : 
+
+zone "sak.esgi" IN {
+    type slave;
+    file "/var/cache/bind/db.sak.esgi";
+    masters { 192.168.X.11; };
+};
+
+zone "X.168.192.in-addr.arpa" {
+    type slave;
+    file "/var/cache/bind/db.192";
+    masters { 192.168.X.11; };
+};
+
+
+sudo nano /etc/bind/named.conf.options
+rajouter : 
+
+forwarders{
+    8.8.8.8;
+    8.8.4.4;
+};
+allow-recursion { any; };
+auth-nxdomain no;
+
+
+sudo nano /etc/resolv.conf
+changer 
+
+domain sak.esgi
+search sak.esgi
+nameserver 192.168.X.11
+
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!! TEST !!!!!!!!!!!!!!!!!!!!!!!!!!!
+nslookup 192.168.X.12 (reverse DNS)
+nslookup ns2.sak.esgi
+ping google.fr
+
+Sur une machine EXTERNE, a connecter à la même VMnet, en serveur DNS mettre 192.168.18.11 et .12, puis refaire les mêmes commandes
