@@ -1,0 +1,26 @@
+Notice:
+
+userdel -r username --> suprimer un user et ses fichiers (/home/username)
+id -gn username : afiche groupe primaire et -G tous groupes
+
+userAdd:
+Se lance avec ./userAdd.sh user.txt
+##########################################
+IFS : Internal Field Separator --> IFS=: définition du séparateur
+read -r --> lire les caractères d'échappement tq l'antislash
+${prenom:0:1} position 0, prenez 1 caractère
+login=$(echo "${prenom:0:1}${nom}" | tr '[:upper:]' '[:lower:]') --> les 2 virgules convertissent tout en minuscule
+id -u "login" permet de verif si l'user existe deja. >/dev/null && 2>&1 permettent de ne pas afficher les erreurs, vu qu'elles seront raitées. 2>&1= redirection vers le meme endroit que la sortie standard
+RAPEL > sortie standard, 2> err output
+read -ra group_array <<< "$groupes" --> <<< pour rediriger une chaine de caractère divisée en mots au sein d''un tableau
+${group_array[@]:1} --> le tab complet à partir de l'indice 1
+getent --> avoir acès aux bdd de linux configurées dans /etc/nsswitch.conf
+On l'utilise plutot qUE DE LIRE DIRECTEMENT :ETC:PASSWD POUR POUVOIR prendre en compte les LDAP si ils existent
+-z si existe pas -n si n'est pas vide
+
+       if [ $? -eq 0 ]; then
+            chage -d 0 "$login"
+        fi --> si ca marche, on 
+
+listUsers:
+
